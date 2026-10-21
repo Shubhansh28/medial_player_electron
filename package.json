@@ -1,0 +1,22 @@
+{
+  "name": "study-media-player",
+  "version": "0.1.0",
+  "description": "A personal desktop media player for study videos.",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "build": "vite build",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.4",
+    "concurrently": "^9.2.1",
+    "electron": "^38.2.0",
+    "vite": "^7.1.7",
+    "wait-on": "^8.0.4"
+  }
+}
