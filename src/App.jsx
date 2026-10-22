@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 
 function App() {
   const [connection, setConnection] = useState('Checking desktop connection...');
+  const [folder, setFolder] = useState('');
+  const [isSelectingFolder, setIsSelectingFolder] = useState(false);
+  const [folderError, setFolderError] = useState('');
 
   useEffect(() => {
     window.api
@@ -13,6 +16,23 @@ function App() {
         setConnection('Desktop connection unavailable');
       });
   }, []);
+
+  async function selectFolder() {
+    setIsSelectingFolder(true);
+    setFolderError('');
+
+    try {
+      const selectedFolder = await window.api.selectFolder();
+
+      if (selectedFolder) {
+        setFolder(selectedFolder);
+      }
+    } catch (error) {
+      setFolderError('The folder could not be selected. Please try again.');
+    } finally {
+      setIsSelectingFolder(false);
+    }
+  }
 
   return (
     <div className="app-shell">
@@ -43,7 +63,9 @@ function App() {
 
           <div className="sidebar-footer">
             <p className="section-label">Getting started</p>
-            <p className="sidebar-copy">Your study videos will appear here when you add a library folder.</p>
+            <p className="sidebar-copy">
+              {folder || 'Your study videos will appear here when you add a library folder.'}
+            </p>
           </div>
         </aside>
 
@@ -56,16 +78,27 @@ function App() {
                 Add a folder of study videos to build your personal library.
               </p>
             </div>
-            <button className="primary-button" type="button" disabled>
-              Add folder
+            <button className="primary-button" type="button" onClick={selectFolder} disabled={isSelectingFolder}>
+              {isSelectingFolder ? 'Opening...' : 'Add folder'}
             </button>
           </section>
 
           <section className="empty-state" aria-label="Empty media library">
             <div className="empty-icon">▶</div>
-            <h2>Your library is empty</h2>
-            <p className="muted-text">Choose a study folder to start organizing your videos.</p>
-            <span className="coming-soon">Folder selection coming next</span>
+            {folder ? (
+              <>
+                <h2>Folder selected</h2>
+                <p className="selected-folder">{folder}</p>
+                <p className="muted-text">Media scanning will be available in the next chunk.</p>
+              </>
+            ) : (
+              <>
+                <h2>Your library is empty</h2>
+                <p className="muted-text">Choose a study folder to start organizing your videos.</p>
+                <span className="coming-soon">Select a folder to get started</span>
+              </>
+            )}
+            {folderError && <p className="error-message" role="alert">{folderError}</p>}
           </section>
         </main>
       </div>

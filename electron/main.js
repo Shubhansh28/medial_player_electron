@@ -1,5 +1,5 @@
 const path = require('node:path');
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 
 let mainWindow;
 
@@ -25,6 +25,19 @@ function createWindow() {
 }
 
 ipcMain.handle('app:ping', () => 'pong');
+
+ipcMain.handle('folder:select', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory'],
+    title: 'Choose a study folder',
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return null;
+  }
+
+  return result.filePaths[0];
+});
 
 app.whenReady().then(() => {
   createWindow();

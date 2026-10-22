@@ -166,13 +166,14 @@ h2 {
   border: 0;
   border-radius: 8px;
   color: white;
-  cursor: default;
+  cursor: pointer;
   font-size: 14px;
   font-weight: 600;
   padding: 12px 18px;
 }
 
 .primary-button:disabled {
+  cursor: wait;
   opacity: 0.55;
 }
 
@@ -207,5 +208,19 @@ h2 {
 .coming-soon {
   color: #9ba6b8;
   font-size: 12px;
+  margin-top: 18px;
+}
+
+.selected-folder {
+  color: #4666cf;
+  font-size: 13px;
+  max-width: 680px;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.error-message {
+  color: #c44b55;
+  font-size: 13px;
   margin-top: 18px;
 }
