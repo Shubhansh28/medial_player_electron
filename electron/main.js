@@ -1,4 +1,5 @@
 const path = require('node:path');
+const fs = require('node:fs/promises');
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 
 let mainWindow;
@@ -37,6 +38,23 @@ ipcMain.handle('folder:select', async () => {
   }
 
   return result.filePaths[0];
+});
+
+ipcMain.handle('folder:scan', async (_event, folderPath) => {
+  if (typeof folderPath !== 'string' || folderPath.trim() === '') {
+    throw new Error('A valid folder path is required.');
+  }
+
+  const entries = await fs.readdir(folderPath, { withFileTypes: true });
+  const supportedExtensions = new Set(['.mp4', '.webm']);
+
+  return entries
+    .filter((entry) => entry.isFile() && supportedExtensions.has(path.extname(entry.name).toLowerCase()))
+    .map((entry) => ({
+      name: entry.name,
+      path: path.join(folderPath, entry.name),
+    }))
+    .sort((first, second) => first.name.localeCompare(second.name));
 });
 
 app.whenReady().then(() => {

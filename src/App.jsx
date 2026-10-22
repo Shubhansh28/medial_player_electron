@@ -4,6 +4,8 @@ function App() {
   const [connection, setConnection] = useState('Checking desktop connection...');
   const [folder, setFolder] = useState('');
   const [isSelectingFolder, setIsSelectingFolder] = useState(false);
+  const [isScanningFolder, setIsScanningFolder] = useState(false);
+  const [media, setMedia] = useState([]);
   const [folderError, setFolderError] = useState('');
 
   useEffect(() => {
@@ -17,6 +19,21 @@ function App() {
       });
   }, []);
 
+  async function scanFolder(folderPath) {
+    setIsScanningFolder(true);
+    setFolderError('');
+
+    try {
+      const files = await window.api.scanFolder(folderPath);
+      setMedia(files);
+    } catch (error) {
+      setMedia([]);
+      setFolderError('The folder could not be scanned. Check that it still exists and try again.');
+    } finally {
+      setIsScanningFolder(false);
+    }
+  }
+
   async function selectFolder() {
     setIsSelectingFolder(true);
     setFolderError('');
@@ -26,6 +43,7 @@ function App() {
 
       if (selectedFolder) {
         setFolder(selectedFolder);
+        await scanFolder(selectedFolder);
       }
     } catch (error) {
       setFolderError('The folder could not be selected. Please try again.');
@@ -78,8 +96,13 @@ function App() {
                 Add a folder of study videos to build your personal library.
               </p>
             </div>
-            <button className="primary-button" type="button" onClick={selectFolder} disabled={isSelectingFolder}>
-              {isSelectingFolder ? 'Opening...' : 'Add folder'}
+            <button
+              className="primary-button"
+              type="button"
+              onClick={selectFolder}
+              disabled={isSelectingFolder || isScanningFolder}
+            >
+              {isSelectingFolder ? 'Opening...' : isScanningFolder ? 'Scanning...' : 'Add folder'}
             </button>
           </section>
 
@@ -87,9 +110,13 @@ function App() {
             <div className="empty-icon">▶</div>
             {folder ? (
               <>
-                <h2>Folder selected</h2>
+                <h2>{isScanningFolder ? 'Scanning folder...' : 'Folder scanned'}</h2>
                 <p className="selected-folder">{folder}</p>
-                <p className="muted-text">Media scanning will be available in the next chunk.</p>
+                <p className="muted-text">
+                  {media.length === 0 && !isScanningFolder
+                    ? 'No supported videos were found in this folder.'
+                    : `${media.length} supported video${media.length === 1 ? '' : 's'} found.`}
+                </p>
               </>
             ) : (
               <>
