@@ -8,4 +8,7 @@ contextBridge.exposeInMainWorld('api', {
   loadProgress: (filePath) => ipcRenderer.invoke('progress:load', filePath),
   saveProgress: (filePath, seconds) => ipcRenderer.invoke('progress:save', filePath, seconds),
   loadHistory: () => ipcRenderer.invoke('history:load'),
+  renameFile: (filePath, newName) => ipcRenderer.invoke('file:rename', filePath, newName),
+  deleteFile: (filePath) => ipcRenderer.invoke('file:delete', filePath),
+  showInFolder: (filePath) => ipcRenderer.invoke('file:show-in-folder', filePath),
 });

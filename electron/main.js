@@ -1,7 +1,7 @@
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const fs = require('node:fs/promises');
-const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
 const { config } = require('dotenv')
 config()
 
@@ -145,6 +145,65 @@ ipcMain.handle('history:load', async () => {
   return Object.entries(store.history)
     .map(([filePath, item]) => ({ path: filePath, ...item }))
     .sort((first, second) => second.lastPlayed.localeCompare(first.lastPlayed));
+});
+
+ipcMain.handle('file:rename', async (_event, filePath, newName) => {
+  if (typeof filePath !== 'string' || filePath.trim() === '' || typeof newName !== 'string') {
+    throw new Error('A valid file path and name are required.');
+  }
+
+  const name = newName.trim();
+  if (!name || name !== path.basename(name) || name === '.' || name === '..') {
+    throw new Error('A valid file name is required.');
+  }
+
+  const nextPath = path.join(path.dirname(filePath), name);
+  if (nextPath === filePath) {
+    throw new Error('The new file name must be different.');
+  }
+  try {
+    await fs.access(nextPath);
+    throw new Error('A file with that name already exists.');
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  await fs.rename(filePath, nextPath);
+  const store = await readStore();
+  if (store.progress[filePath] !== undefined) {
+    store.progress[nextPath] = store.progress[filePath];
+    delete store.progress[filePath];
+  }
+  if (store.history[filePath]) {
+    store.history[nextPath] = store.history[filePath];
+    delete store.history[filePath];
+  }
+  await fs.mkdir(app.getPath('userData'), { recursive: true });
+  await fs.writeFile(getProgressPath(), JSON.stringify(store, null, 2), 'utf8');
+  return {
+    name,
+    path: nextPath,
+  };
+});
+
+ipcMain.handle('file:delete', async (_event, filePath) => {
+  if (typeof filePath !== 'string' || filePath.trim() === '') {
+    throw new Error('A valid file path is required.');
+  }
+
+  await fs.unlink(filePath);
+  const store = await readStore();
+  delete store.progress[filePath];
+  delete store.history[filePath];
+  await fs.mkdir(app.getPath('userData'), { recursive: true });
+  await fs.writeFile(getProgressPath(), JSON.stringify(store, null, 2), 'utf8');
+});
+
+ipcMain.handle('file:show-in-folder', async (_event, filePath) => {
+  if (typeof filePath !== 'string' || filePath.trim() === '') {
+    throw new Error('A valid file path is required.');
+  }
+
+  shell.showItemInFolder(filePath);
 });
 
 app.whenReady().then(() => {

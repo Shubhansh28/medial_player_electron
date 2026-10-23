@@ -449,3 +449,33 @@ h2 {
   font-size: 13px;
   margin-top: 18px;
 }
+
+.file-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.secondary-button,
+.danger-button {
+  background: #ffffff;
+  border: 1px solid #dfe5ef;
+  border-radius: 7px;
+  color: #52617b;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
+.secondary-button:hover {
+  border-color: #4666cf;
+  color: #4666cf;
+}
+
+.danger-button {
+  color: #c44b55;
+}
+
+.danger-button:hover {
+  border-color: #c44b55;
+}

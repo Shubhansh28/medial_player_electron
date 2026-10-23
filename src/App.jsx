@@ -77,15 +77,61 @@ function App() {
     } catch (error) {
       setPlayerError('Playback position could not be saved.');
     }
+  }
 
-    function getMediaByPath(filePath) {
-      return media.find((video) => video.path === filePath);
+  function getMediaByPath(filePath) {
+    return media.find((video) => video.path === filePath);
+  }
+
+  function formatLastPlayed(value) {
+    if (!value) return 'Recently watched';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Recently watched' : `Watched ${date.toLocaleDateString()}`;
+  }
+
+  async function renameSelectedMedia() {
+    if (!selectedMedia) return;
+
+    const newName = window.prompt('Enter a new file name:', selectedMedia.name);
+    if (newName === null || newName.trim() === selectedMedia.name) return;
+
+    try {
+      const renamed = await window.api.renameFile(selectedMedia.path, newName);
+      setMedia((items) => items.map((item) => (item.path === selectedMedia.path ? renamed : item)));
+      setHistory((items) => items.map((item) => (
+        item.path === selectedMedia.path ? { ...item, path: renamed.path } : item
+      )));
+      setSelectedMedia(renamed);
+      setSelectedMediaUrl(await window.api.getMediaUrl(renamed.path));
+      setPlayerError('');
+    } catch (error) {
+      setPlayerError('The video could not be renamed. Check the name and try again.');
     }
+  }
 
-    function formatLastPlayed(value) {
-      if (!value) return 'Recently watched';
-      const date = new Date(value);
-      return Number.isNaN(date.getTime()) ? 'Recently watched' : `Watched ${date.toLocaleDateString()}`;
+  async function deleteSelectedMedia() {
+    if (!selectedMedia || !window.confirm(`Delete "${selectedMedia.name}"? This cannot be undone.`)) return;
+
+    try {
+      await window.api.deleteFile(selectedMedia.path);
+      setMedia((items) => items.filter((item) => item.path !== selectedMedia.path));
+      setHistory((items) => items.filter((item) => item.path !== selectedMedia.path));
+      setSelectedMedia(null);
+      setSelectedMediaUrl('');
+      setSelectedMediaProgress(0);
+      setPlayerError('');
+    } catch (error) {
+      setPlayerError('The video could not be deleted. It may have already been removed.');
+    }
+  }
+
+  async function showSelectedMediaInFolder() {
+    if (!selectedMedia) return;
+
+    try {
+      await window.api.showInFolder(selectedMedia.path);
+    } catch (error) {
+      setPlayerError('The video location could not be opened.');
     }
   }
 
@@ -190,13 +236,20 @@ function App() {
                 ))}
               </div>
               {selectedMedia && selectedMediaUrl && (
-                <VideoPlayer
-                  media={selectedMedia}
-                  source={selectedMediaUrl}
-                  initialProgress={selectedMediaProgress}
-                  onProgressChange={saveProgress}
-                  onError={() => setPlayerError('This video could not be played. Check that the file is a valid MP4 or WebM video.')}
-                />
+                <>
+                  <VideoPlayer
+                    media={selectedMedia}
+                    source={selectedMediaUrl}
+                    initialProgress={selectedMediaProgress}
+                    onProgressChange={saveProgress}
+                    onError={() => setPlayerError('This video could not be played. Check that the file is a valid MP4 or WebM video.')}
+                  />
+                  <div className="file-actions" aria-label="File actions">
+                    <button type="button" className="secondary-button" onClick={renameSelectedMedia}>Rename</button>
+                    <button type="button" className="secondary-button" onClick={showSelectedMediaInFolder}>Show in folder</button>
+                    <button type="button" className="danger-button" onClick={deleteSelectedMedia}>Delete</button>
+                  </div>
+                </>
               )}
               {playerError && <p className="error-message" role="alert">{playerError}</p>}
               {history.length > 0 && (
