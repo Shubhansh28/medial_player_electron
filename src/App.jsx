@@ -6,6 +6,7 @@ function App() {
   const [isSelectingFolder, setIsSelectingFolder] = useState(false);
   const [isScanningFolder, setIsScanningFolder] = useState(false);
   const [media, setMedia] = useState([]);
+  const [selectedMedia, setSelectedMedia] = useState(null);
   const [folderError, setFolderError] = useState('');
 
   useEffect(() => {
@@ -26,6 +27,7 @@ function App() {
     try {
       const files = await window.api.scanFolder(folderPath);
       setMedia(files);
+      setSelectedMedia(null);
     } catch (error) {
       setMedia([]);
       setFolderError('The folder could not be scanned. Check that it still exists and try again.');
@@ -106,27 +108,63 @@ function App() {
             </button>
           </section>
 
-          <section className="empty-state" aria-label="Empty media library">
-            <div className="empty-icon">▶</div>
-            {folder ? (
-              <>
-                <h2>{isScanningFolder ? 'Scanning folder...' : 'Folder scanned'}</h2>
-                <p className="selected-folder">{folder}</p>
-                <p className="muted-text">
-                  {media.length === 0 && !isScanningFolder
-                    ? 'No supported videos were found in this folder.'
-                    : `${media.length} supported video${media.length === 1 ? '' : 's'} found.`}
+          {folder && media.length > 0 && !isScanningFolder ? (
+            <section className="library-section" aria-label="Media library">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">YOUR LIBRARY</p>
+                  <h2>Study videos</h2>
+                </div>
+                <span className="media-count">
+                  {media.length} video{media.length === 1 ? '' : 's'}
+                </span>
+              </div>
+              <div className="media-grid">
+                {media.map((video) => (
+                  <button
+                    className={`media-card${selectedMedia?.path === video.path ? ' selected' : ''}`}
+                    key={video.path}
+                    type="button"
+                    onClick={() => setSelectedMedia(video)}
+                    aria-pressed={selectedMedia?.path === video.path}
+                  >
+                    <span className="media-thumbnail">▶</span>
+                    <span className="media-details">
+                      <strong title={video.name}>{video.name}</strong>
+                      <span>{video.name.split('.').pop().toUpperCase()} video</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {selectedMedia && (
+                <p className="selection-message" role="status">
+                  Selected: {selectedMedia.name}. Playback will be available in the next chunk.
                 </p>
-              </>
-            ) : (
-              <>
-                <h2>Your library is empty</h2>
-                <p className="muted-text">Choose a study folder to start organizing your videos.</p>
-                <span className="coming-soon">Select a folder to get started</span>
-              </>
-            )}
-            {folderError && <p className="error-message" role="alert">{folderError}</p>}
-          </section>
+              )}
+            </section>
+          ) : (
+            <section className="empty-state" aria-label="Empty media library">
+              <div className="empty-icon">▶</div>
+              {folder ? (
+                <>
+                  <h2>{isScanningFolder ? 'Scanning folder...' : 'No videos found'}</h2>
+                  <p className="selected-folder">{folder}</p>
+                  <p className="muted-text">
+                    {isScanningFolder
+                      ? 'Looking for MP4 and WebM files.'
+                      : 'No supported videos were found in this folder.'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2>Your library is empty</h2>
+                  <p className="muted-text">Choose a study folder to start organizing your videos.</p>
+                  <span className="coming-soon">Select a folder to get started</span>
+                </>
+              )}
+              {folderError && <p className="error-message" role="alert">{folderError}</p>}
+            </section>
+          )}
         </main>
       </div>
     </div>

@@ -1,6 +1,8 @@
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { config } = require('dotenv')
+config()
 
 let mainWindow;
 
