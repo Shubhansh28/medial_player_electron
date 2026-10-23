@@ -9,6 +9,7 @@ function App() {
   const [media, setMedia] = useState([]);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [selectedMediaUrl, setSelectedMediaUrl] = useState('');
+  const [selectedMediaProgress, setSelectedMediaProgress] = useState(0);
   const [playerError, setPlayerError] = useState('');
   const [folderError, setFolderError] = useState('');
 
@@ -32,6 +33,7 @@ function App() {
       setMedia(files);
       setSelectedMedia(null);
       setSelectedMediaUrl('');
+      setSelectedMediaProgress(0);
     } catch (error) {
       setMedia([]);
       setFolderError('The folder could not be scanned. Check that it still exists and try again.');
@@ -43,13 +45,30 @@ function App() {
   async function selectMedia(video) {
     setSelectedMedia(video);
     setSelectedMediaUrl('');
+    setSelectedMediaProgress(0);
     setPlayerError('');
 
     try {
-      const mediaUrl = await window.api.getMediaUrl(video.path);
+      const [mediaUrl, progress] = await Promise.all([
+        window.api.getMediaUrl(video.path),
+        window.api.loadProgress(video.path),
+      ]);
       setSelectedMediaUrl(mediaUrl);
+      setSelectedMediaProgress(Number.isFinite(progress) && progress >= 0 ? progress : 0);
     } catch (error) {
       setPlayerError('This video could not be opened.');
+    }
+  }
+
+  async function saveProgress(seconds) {
+    if (!selectedMedia) {
+      return;
+    }
+
+    try {
+      await window.api.saveProgress(selectedMedia.path, seconds);
+    } catch (error) {
+      setPlayerError('Playback position could not be saved.');
     }
   }
 
@@ -157,6 +176,8 @@ function App() {
                 <VideoPlayer
                   media={selectedMedia}
                   source={selectedMediaUrl}
+                  initialProgress={selectedMediaProgress}
+                  onProgressChange={saveProgress}
                   onError={() => setPlayerError('This video could not be played. Check that the file is a valid MP4 or WebM video.')}
                 />
               )}

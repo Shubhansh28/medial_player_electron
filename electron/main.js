@@ -7,6 +7,30 @@ config()
 
 let mainWindow;
 
+function getProgressPath() {
+  return path.join(app.getPath('userData'), 'progress.json');
+}
+
+async function readProgress() {
+  try {
+    const data = JSON.parse(await fs.readFile(getProgressPath(), 'utf8'));
+
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      return {};
+    }
+
+    return Object.fromEntries(
+      Object.entries(data).filter(([, value]) => Number.isFinite(value) && value >= 0),
+    );
+  } catch (error) {
+    if (error.code === 'ENOENT' || error instanceof SyntaxError) {
+      return {};
+    }
+
+    throw error;
+  }
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -66,6 +90,30 @@ ipcMain.handle('media:file-url', (_event, filePath) => {
   }
 
   return pathToFileURL(filePath).href;
+});
+
+ipcMain.handle('progress:load', async (_event, filePath) => {
+  if (typeof filePath !== 'string' || filePath.trim() === '') {
+    throw new Error('A valid media path is required.');
+  }
+
+  const progress = await readProgress();
+  return progress[filePath] || 0;
+});
+
+ipcMain.handle('progress:save', async (_event, filePath, seconds) => {
+  if (typeof filePath !== 'string' || filePath.trim() === '') {
+    throw new Error('A valid media path is required.');
+  }
+
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    throw new Error('A valid playback position is required.');
+  }
+
+  const progress = await readProgress();
+  progress[filePath] = seconds;
+  await fs.mkdir(app.getPath('userData'), { recursive: true });
+  await fs.writeFile(getProgressPath(), JSON.stringify(progress, null, 2), 'utf8');
 });
 
 app.whenReady().then(() => {

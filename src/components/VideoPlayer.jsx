@@ -12,7 +12,7 @@ function formatTime(seconds) {
   return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
-function VideoPlayer({ media, source, onError }) {
+function VideoPlayer({ media, source, initialProgress, onError, onProgressChange }) {
   const videoRef = useRef(null);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -20,16 +20,38 @@ function VideoPlayer({ media, source, onError }) {
 
   useEffect(() => {
     setDuration(0);
-    setCurrentTime(0);
+    setCurrentTime(initialProgress);
     setSpeed(1);
-  }, [media]);
+  }, [initialProgress, media]);
 
   function handleLoadedMetadata() {
-    setDuration(videoRef.current?.duration || 0);
+    const video = videoRef.current;
+    const nextDuration = video?.duration || 0;
+    setDuration(nextDuration);
+
+    if (video && initialProgress > 0 && initialProgress < nextDuration) {
+      video.currentTime = initialProgress;
+    } else if (initialProgress >= nextDuration && nextDuration > 0) {
+      setCurrentTime(0);
+      onProgressChange(0);
+    }
   }
 
   function handleTimeUpdate() {
-    setCurrentTime(videoRef.current?.currentTime || 0);
+    const time = videoRef.current?.currentTime || 0;
+    setCurrentTime(time);
+
+    if (videoRef.current && Math.floor(time) % 5 === 0) {
+      onProgressChange(time);
+    }
+  }
+
+  function handlePause() {
+    onProgressChange(videoRef.current?.currentTime || 0);
+  }
+
+  function handleEnded() {
+    onProgressChange(0);
   }
 
   function handleSpeedChange(event) {
@@ -61,6 +83,8 @@ function VideoPlayer({ media, source, onError }) {
         preload="metadata"
         onLoadedMetadata={handleLoadedMetadata}
         onTimeUpdate={handleTimeUpdate}
+        onPause={handlePause}
+        onEnded={handleEnded}
         onError={onError}
       >
         Your browser does not support video playback.

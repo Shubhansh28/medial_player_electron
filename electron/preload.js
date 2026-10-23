@@ -5,4 +5,6 @@ contextBridge.exposeInMainWorld('api', {
   selectFolder: () => ipcRenderer.invoke('folder:select'),
   scanFolder: (folderPath) => ipcRenderer.invoke('folder:scan', folderPath),
   getMediaUrl: (filePath) => ipcRenderer.invoke('media:file-url', filePath),
+  loadProgress: (filePath) => ipcRenderer.invoke('progress:load', filePath),
+  saveProgress: (filePath, seconds) => ipcRenderer.invoke('progress:save', filePath, seconds),
 });
