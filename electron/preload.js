@@ -7,4 +7,5 @@ contextBridge.exposeInMainWorld('api', {
   getMediaUrl: (filePath) => ipcRenderer.invoke('media:file-url', filePath),
   loadProgress: (filePath) => ipcRenderer.invoke('progress:load', filePath),
   saveProgress: (filePath, seconds) => ipcRenderer.invoke('progress:save', filePath, seconds),
+  loadHistory: () => ipcRenderer.invoke('history:load'),
 });

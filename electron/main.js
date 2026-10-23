@@ -12,19 +12,39 @@ function getProgressPath() {
 }
 
 async function readProgress() {
+  const store = await readStore();
+  return store.progress;
+}
+
+async function readStore() {
   try {
     const data = JSON.parse(await fs.readFile(getProgressPath(), 'utf8'));
 
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
-      return {};
+      return { progress: {}, history: {} };
     }
 
-    return Object.fromEntries(
-      Object.entries(data).filter(([, value]) => Number.isFinite(value) && value >= 0),
+    const progressData = data.progress && typeof data.progress === 'object' ? data.progress : data;
+    const historyData = data.history && typeof data.history === 'object' ? data.history : {};
+    const progress = Object.fromEntries(
+      Object.entries(progressData).filter(([, value]) => Number.isFinite(value) && value >= 0),
     );
+    const history = Object.fromEntries(
+      Object.entries(historyData)
+        .filter(([filePath, value]) => value && typeof value === 'object' && typeof filePath === 'string')
+        .map(([filePath, value]) => [
+          filePath,
+          {
+            progress: Number.isFinite(value.progress) && value.progress >= 0 ? value.progress : 0,
+            lastPlayed: typeof value.lastPlayed === 'string' ? value.lastPlayed : '',
+          },
+        ]),
+    );
+
+    return { progress, history };
   } catch (error) {
     if (error.code === 'ENOENT' || error instanceof SyntaxError) {
-      return {};
+      return { progress: {}, history: {} };
     }
 
     throw error;
@@ -110,10 +130,21 @@ ipcMain.handle('progress:save', async (_event, filePath, seconds) => {
     throw new Error('A valid playback position is required.');
   }
 
-  const progress = await readProgress();
-  progress[filePath] = seconds;
+  const store = await readStore();
+  store.progress[filePath] = seconds;
+  store.history[filePath] = {
+    progress: seconds,
+    lastPlayed: new Date().toISOString(),
+  };
   await fs.mkdir(app.getPath('userData'), { recursive: true });
-  await fs.writeFile(getProgressPath(), JSON.stringify(progress, null, 2), 'utf8');
+  await fs.writeFile(getProgressPath(), JSON.stringify(store, null, 2), 'utf8');
+});
+
+ipcMain.handle('history:load', async () => {
+  const store = await readStore();
+  return Object.entries(store.history)
+    .map(([filePath, item]) => ({ path: filePath, ...item }))
+    .sort((first, second) => second.lastPlayed.localeCompare(first.lastPlayed));
 });
 
 app.whenReady().then(() => {

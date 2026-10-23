@@ -271,6 +271,72 @@ h2 {
   margin: 18px 0 0;
 }
 
+.history-section {
+  margin-top: 36px;
+}
+
+.history-list {
+  display: grid;
+  gap: 8px;
+}
+
+.history-item {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e7ebf3;
+  border-radius: 9px;
+  color: #172033;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  text-align: left;
+}
+
+.history-item:hover {
+  border-color: #4666cf;
+}
+
+.history-icon {
+  align-items: center;
+  background: #edf2ff;
+  border-radius: 50%;
+  color: #4666cf;
+  display: flex;
+  flex: 0 0 30px;
+  font-size: 13px;
+  height: 30px;
+  justify-content: center;
+  padding-left: 2px;
+}
+
+.history-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.history-details strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-details span {
+  color: #8a96aa;
+  font-size: 12px;
+}
+
+.history-subheading {
+  color: #71809b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin: 24px 0 10px;
+  text-transform: uppercase;
+}
+
 .player-section {
   background: #ffffff;
   border: 1px solid #e7ebf3;

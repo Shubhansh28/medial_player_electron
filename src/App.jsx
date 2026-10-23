@@ -10,6 +10,7 @@ function App() {
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [selectedMediaUrl, setSelectedMediaUrl] = useState('');
   const [selectedMediaProgress, setSelectedMediaProgress] = useState(0);
+  const [history, setHistory] = useState([]);
   const [playerError, setPlayerError] = useState('');
   const [folderError, setFolderError] = useState('');
 
@@ -30,7 +31,9 @@ function App() {
 
     try {
       const files = await window.api.scanFolder(folderPath);
+      const savedHistory = await window.api.loadHistory();
       setMedia(files);
+      setHistory(savedHistory.filter((item) => files.some((file) => file.path === item.path)));
       setSelectedMedia(null);
       setSelectedMediaUrl('');
       setSelectedMediaProgress(0);
@@ -67,8 +70,22 @@ function App() {
 
     try {
       await window.api.saveProgress(selectedMedia.path, seconds);
+      setHistory((items) => [
+        { path: selectedMedia.path, progress: seconds, lastPlayed: new Date().toISOString() },
+        ...items.filter((item) => item.path !== selectedMedia.path),
+      ]);
     } catch (error) {
       setPlayerError('Playback position could not be saved.');
+    }
+
+    function getMediaByPath(filePath) {
+      return media.find((video) => video.path === filePath);
+    }
+
+    function formatLastPlayed(value) {
+      if (!value) return 'Recently watched';
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? 'Recently watched' : `Watched ${date.toLocaleDateString()}`;
     }
   }
 
@@ -111,9 +128,9 @@ function App() {
               <span className="nav-icon">▦</span>
               Overview
             </button>
-            <button className="nav-item" type="button" disabled>
+            <button className="nav-item" type="button" disabled={!history.some((item) => item.progress > 0)}>
               <span className="nav-icon">◷</span>
-              Continue watching
+              Continue watching{history.some((item) => item.progress > 0) && ` (${history.filter((item) => item.progress > 0).length})`}
             </button>
           </div>
 
@@ -182,6 +199,47 @@ function App() {
                 />
               )}
               {playerError && <p className="error-message" role="alert">{playerError}</p>}
+              {history.length > 0 && (
+                <div className="history-section">
+                  <div className="section-heading">
+                    <div>
+                      <p className="eyebrow">YOUR ACTIVITY</p>
+                      <h2>Continue watching</h2>
+                    </div>
+                  </div>
+                  <div className="history-list">
+                    {history.filter((item) => item.progress > 0).map((item) => {
+                      const video = getMediaByPath(item.path);
+                      if (!video) return null;
+                      return (
+                        <button className="history-item" type="button" key={item.path} onClick={() => selectMedia(video)}>
+                          <span className="history-icon">▶</span>
+                          <span className="history-details">
+                            <strong>{video.name}</strong>
+                            <span>{formatLastPlayed(item.lastPlayed)} · {Math.floor(item.progress / 60)} min in</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="history-subheading">Recently Watched</p>
+                  <div className="history-list">
+                    {history.slice(0, 5).map((item) => {
+                      const video = getMediaByPath(item.path);
+                      if (!video) return null;
+                      return (
+                        <button className="history-item" type="button" key={`recent-${item.path}`} onClick={() => selectMedia(video)}>
+                          <span className="history-icon">◷</span>
+                          <span className="history-details">
+                            <strong>{video.name}</strong>
+                            <span>{formatLastPlayed(item.lastPlayed)}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </section>
           ) : (
             <section className="empty-state" aria-label="Empty media library">
