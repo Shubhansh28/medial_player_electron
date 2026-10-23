@@ -271,6 +271,80 @@ h2 {
   margin: 18px 0 0;
 }
 
+.player-section {
+  background: #ffffff;
+  border: 1px solid #e7ebf3;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(48, 67, 105, 0.04);
+  margin-top: 30px;
+  padding: 22px;
+}
+
+.player-heading {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 20px;
+}
+
+.player-heading h2 {
+  font-size: 20px;
+  margin: 0;
+  max-width: 680px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time-display {
+  color: #65728a;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  padding-top: 5px;
+  white-space: nowrap;
+}
+
+.video-player {
+  background: #101522;
+  border-radius: 9px;
+  display: block;
+  max-height: 480px;
+  width: 100%;
+}
+
+.player-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  padding-top: 15px;
+}
+
+.player-hint {
+  color: #8a96aa;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.speed-control {
+  align-items: center;
+  color: #65728a;
+  display: flex;
+  flex-shrink: 0;
+  font-size: 12px;
+  gap: 8px;
+}
+
+.speed-control select {
+  background: #f4f7fb;
+  border: 1px solid #dfe5ef;
+  border-radius: 6px;
+  color: #40506e;
+  font-size: 12px;
+  padding: 6px 8px;
+}
+
 .empty-state h2 {
   font-size: 22px;
   margin-bottom: 8px;

@@ -4,7 +4,7 @@
   "description": "A personal desktop media player for study videos.",
   "main": "electron/main.js",
   "scripts": {
-    "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && ELECTRON_START_URL=http://localhost:5173 electron .\"",
     "build": "vite build",
     "start": "electron ."
   },

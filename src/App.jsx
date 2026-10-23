@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import VideoPlayer from './components/VideoPlayer';
 
 function App() {
   const [connection, setConnection] = useState('Checking desktop connection...');
@@ -7,6 +8,8 @@ function App() {
   const [isScanningFolder, setIsScanningFolder] = useState(false);
   const [media, setMedia] = useState([]);
   const [selectedMedia, setSelectedMedia] = useState(null);
+  const [selectedMediaUrl, setSelectedMediaUrl] = useState('');
+  const [playerError, setPlayerError] = useState('');
   const [folderError, setFolderError] = useState('');
 
   useEffect(() => {
@@ -28,11 +31,25 @@ function App() {
       const files = await window.api.scanFolder(folderPath);
       setMedia(files);
       setSelectedMedia(null);
+      setSelectedMediaUrl('');
     } catch (error) {
       setMedia([]);
       setFolderError('The folder could not be scanned. Check that it still exists and try again.');
     } finally {
       setIsScanningFolder(false);
+    }
+  }
+
+  async function selectMedia(video) {
+    setSelectedMedia(video);
+    setSelectedMediaUrl('');
+    setPlayerError('');
+
+    try {
+      const mediaUrl = await window.api.getMediaUrl(video.path);
+      setSelectedMediaUrl(mediaUrl);
+    } catch (error) {
+      setPlayerError('This video could not be opened.');
     }
   }
 
@@ -125,7 +142,7 @@ function App() {
                     className={`media-card${selectedMedia?.path === video.path ? ' selected' : ''}`}
                     key={video.path}
                     type="button"
-                    onClick={() => setSelectedMedia(video)}
+                    onClick={() => selectMedia(video)}
                     aria-pressed={selectedMedia?.path === video.path}
                   >
                     <span className="media-thumbnail">▶</span>
@@ -136,11 +153,14 @@ function App() {
                   </button>
                 ))}
               </div>
-              {selectedMedia && (
-                <p className="selection-message" role="status">
-                  Selected: {selectedMedia.name}. Playback will be available in the next chunk.
-                </p>
+              {selectedMedia && selectedMediaUrl && (
+                <VideoPlayer
+                  media={selectedMedia}
+                  source={selectedMediaUrl}
+                  onError={() => setPlayerError('This video could not be played. Check that the file is a valid MP4 or WebM video.')}
+                />
               )}
+              {playerError && <p className="error-message" role="alert">{playerError}</p>}
             </section>
           ) : (
             <section className="empty-state" aria-label="Empty media library">

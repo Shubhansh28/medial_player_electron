@@ -1,4 +1,5 @@
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 const fs = require('node:fs/promises');
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const { config } = require('dotenv')
@@ -20,8 +21,8 @@ function createWindow() {
     },
   });
 
-  if (process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+  if (process.env.ELECTRON_START_URL) {
+    mainWindow.loadURL(process.env.ELECTRON_START_URL);
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
@@ -57,6 +58,14 @@ ipcMain.handle('folder:scan', async (_event, folderPath) => {
       path: path.join(folderPath, entry.name),
     }))
     .sort((first, second) => first.name.localeCompare(second.name));
+});
+
+ipcMain.handle('media:file-url', (_event, filePath) => {
+  if (typeof filePath !== 'string' || filePath.trim() === '') {
+    throw new Error('A valid media path is required.');
+  }
+
+  return pathToFileURL(filePath).href;
 });
 
 app.whenReady().then(() => {
