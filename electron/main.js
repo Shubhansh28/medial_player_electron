@@ -2,8 +2,6 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const fs = require('node:fs/promises');
 const { app, BrowserWindow, dialog, ipcMain, Notification, shell } = require('electron');
-const { config } = require('dotenv')
-config()
 
 let mainWindow;
 
@@ -23,11 +21,6 @@ async function ensureFile(filePath) {
   if (!info.isFile()) {
     throw new Error('The selected path is not a file.');
   }
-}
-
-async function readProgress() {
-  const store = await readStore();
-  return store.progress;
 }
 
 async function readStore() {
@@ -127,7 +120,8 @@ ipcMain.handle('progress:load', async (_event, filePath) => {
   validatePath(filePath, 'media path');
   await ensureFile(filePath);
 
-  const progress = await readProgress();
+  const store = await readStore();
+  const progress = store.progress;
   return progress[filePath] || 0;
 });
 
