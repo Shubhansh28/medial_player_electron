@@ -12,7 +12,7 @@ function formatTime(seconds) {
   return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
-function VideoPlayer({ media, source, initialProgress, onError, onProgressChange }) {
+function VideoPlayer({ media, source, initialProgress, onError, onProgressChange, onComplete }) {
   const videoRef = useRef(null);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -52,6 +52,7 @@ function VideoPlayer({ media, source, initialProgress, onError, onProgressChange
 
   function handleEnded() {
     onProgressChange(0);
+    onComplete(media.name);
   }
 
   function handleSpeedChange(event) {

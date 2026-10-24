@@ -68,6 +68,14 @@ function App() {
       return;
     }
 
+    async function notifyVideoComplete(videoName) {
+      try {
+        await window.api.notifyVideoComplete(videoName);
+      } catch (error) {
+        setPlayerError('The video finished, but the desktop notification could not be shown.');
+      }
+    }
+
     try {
       await window.api.saveProgress(selectedMedia.path, seconds);
       setHistory((items) => [
@@ -242,6 +250,7 @@ function App() {
                     source={selectedMediaUrl}
                     initialProgress={selectedMediaProgress}
                     onProgressChange={saveProgress}
+                    onComplete={notifyVideoComplete}
                     onError={() => setPlayerError('This video could not be played. Check that the file is a valid MP4 or WebM video.')}
                   />
                   <div className="file-actions" aria-label="File actions">

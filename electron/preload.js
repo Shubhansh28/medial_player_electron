@@ -11,4 +11,5 @@ contextBridge.exposeInMainWorld('api', {
   renameFile: (filePath, newName) => ipcRenderer.invoke('file:rename', filePath, newName),
   deleteFile: (filePath) => ipcRenderer.invoke('file:delete', filePath),
   showInFolder: (filePath) => ipcRenderer.invoke('file:show-in-folder', filePath),
+  notifyVideoComplete: (videoName) => ipcRenderer.invoke('notification:video-complete', videoName),
 });

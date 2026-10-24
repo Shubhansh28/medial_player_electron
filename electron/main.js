@@ -1,7 +1,7 @@
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const fs = require('node:fs/promises');
-const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Notification, shell } = require('electron');
 const { config } = require('dotenv')
 config()
 
@@ -145,6 +145,33 @@ ipcMain.handle('history:load', async () => {
   return Object.entries(store.history)
     .map(([filePath, item]) => ({ path: filePath, ...item }))
     .sort((first, second) => second.lastPlayed.localeCompare(first.lastPlayed));
+});
+
+ipcMain.handle('notification:video-complete', (_event, videoName) => {
+  if (typeof videoName !== 'string' || videoName.trim() === '') {
+    throw new Error('A valid video name is required.');
+  }
+
+  if (!Notification.isSupported()) {
+    return false;
+  }
+
+  const notification = new Notification({
+    title: 'Video complete',
+    body: `${videoName} has finished playing.`,
+  });
+
+  notification.on('click', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+  notification.show();
+  return true;
 });
 
 ipcMain.handle('file:rename', async (_event, filePath, newName) => {
