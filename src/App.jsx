@@ -39,6 +39,10 @@ function App() {
       setSelectedMediaProgress(0);
     } catch (error) {
       setMedia([]);
+      setHistory([]);
+      setSelectedMedia(null);
+      setSelectedMediaUrl('');
+      setSelectedMediaProgress(0);
       setFolderError('The folder could not be scanned. Check that it still exists and try again.');
     } finally {
       setIsScanningFolder(false);
@@ -68,14 +72,6 @@ function App() {
       return;
     }
 
-    async function notifyVideoComplete(videoName) {
-      try {
-        await window.api.notifyVideoComplete(videoName);
-      } catch (error) {
-        setPlayerError('The video finished, but the desktop notification could not be shown.');
-      }
-    }
-
     try {
       await window.api.saveProgress(selectedMedia.path, seconds);
       setHistory((items) => [
@@ -84,6 +80,14 @@ function App() {
       ]);
     } catch (error) {
       setPlayerError('Playback position could not be saved.');
+    }
+  }
+
+  async function notifyVideoComplete(videoName) {
+    try {
+      await window.api.notifyVideoComplete(videoName);
+    } catch (error) {
+      setPlayerError('The video finished, but the desktop notification could not be shown.');
     }
   }
 
@@ -111,6 +115,7 @@ function App() {
       )));
       setSelectedMedia(renamed);
       setSelectedMediaUrl(await window.api.getMediaUrl(renamed.path));
+      setPlayerError('');
       setPlayerError('');
     } catch (error) {
       setPlayerError('The video could not be renamed. Check the name and try again.');

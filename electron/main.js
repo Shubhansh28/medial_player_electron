@@ -11,6 +11,20 @@ function getProgressPath() {
   return path.join(app.getPath('userData'), 'progress.json');
 }
 
+function validatePath(filePath, label = 'file path') {
+  if (typeof filePath !== 'string' || filePath.trim() === '' || !path.isAbsolute(filePath)) {
+    throw new Error(`A valid absolute ${label} is required.`);
+  }
+}
+
+async function ensureFile(filePath) {
+  validatePath(filePath);
+  const info = await fs.stat(filePath);
+  if (!info.isFile()) {
+    throw new Error('The selected path is not a file.');
+  }
+}
+
 async function readProgress() {
   const store = await readStore();
   return store.progress;
@@ -88,9 +102,7 @@ ipcMain.handle('folder:select', async () => {
 });
 
 ipcMain.handle('folder:scan', async (_event, folderPath) => {
-  if (typeof folderPath !== 'string' || folderPath.trim() === '') {
-    throw new Error('A valid folder path is required.');
-  }
+  validatePath(folderPath, 'folder path');
 
   const entries = await fs.readdir(folderPath, { withFileTypes: true });
   const supportedExtensions = new Set(['.mp4', '.webm']);
@@ -104,27 +116,24 @@ ipcMain.handle('folder:scan', async (_event, folderPath) => {
     .sort((first, second) => first.name.localeCompare(second.name));
 });
 
-ipcMain.handle('media:file-url', (_event, filePath) => {
-  if (typeof filePath !== 'string' || filePath.trim() === '') {
-    throw new Error('A valid media path is required.');
-  }
+ipcMain.handle('media:file-url', async (_event, filePath) => {
+  validatePath(filePath, 'media path');
+  await ensureFile(filePath);
 
   return pathToFileURL(filePath).href;
 });
 
 ipcMain.handle('progress:load', async (_event, filePath) => {
-  if (typeof filePath !== 'string' || filePath.trim() === '') {
-    throw new Error('A valid media path is required.');
-  }
+  validatePath(filePath, 'media path');
+  await ensureFile(filePath);
 
   const progress = await readProgress();
   return progress[filePath] || 0;
 });
 
 ipcMain.handle('progress:save', async (_event, filePath, seconds) => {
-  if (typeof filePath !== 'string' || filePath.trim() === '') {
-    throw new Error('A valid media path is required.');
-  }
+  validatePath(filePath, 'media path');
+  await ensureFile(filePath);
 
   if (!Number.isFinite(seconds) || seconds < 0) {
     throw new Error('A valid playback position is required.');
@@ -175,9 +184,10 @@ ipcMain.handle('notification:video-complete', (_event, videoName) => {
 });
 
 ipcMain.handle('file:rename', async (_event, filePath, newName) => {
-  if (typeof filePath !== 'string' || filePath.trim() === '' || typeof newName !== 'string') {
+  if (typeof newName !== 'string') {
     throw new Error('A valid file path and name are required.');
   }
+  await ensureFile(filePath);
 
   const name = newName.trim();
   if (!name || name !== path.basename(name) || name === '.' || name === '..') {
@@ -213,9 +223,7 @@ ipcMain.handle('file:rename', async (_event, filePath, newName) => {
 });
 
 ipcMain.handle('file:delete', async (_event, filePath) => {
-  if (typeof filePath !== 'string' || filePath.trim() === '') {
-    throw new Error('A valid file path is required.');
-  }
+  await ensureFile(filePath);
 
   await fs.unlink(filePath);
   const store = await readStore();
@@ -226,9 +234,7 @@ ipcMain.handle('file:delete', async (_event, filePath) => {
 });
 
 ipcMain.handle('file:show-in-folder', async (_event, filePath) => {
-  if (typeof filePath !== 'string' || filePath.trim() === '') {
-    throw new Error('A valid file path is required.');
-  }
+  await ensureFile(filePath);
 
   shell.showItemInFolder(filePath);
 });
